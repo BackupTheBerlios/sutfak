@@ -1,0 +1,12 @@
+Sutfak : A Lojban quick dictionary
+
+Sutfak is a program that acts like a localized, handy version of Jbovlaste, the online
+Lojban dictionary. Features include:
+
+- Searches for English gloss words, text within definitions, and for gismu, cmavo, and rafsi
+- Allows P5 regular expression searches within definitions
+- Shows a log of all searches performed
+- De-constructs lujvo into their component rafsi
+- Searches for multiple terms at a time (separated by commas)
+
+Note that Sutfak is not a validator: it may return output even for ungrammatical lujvo. 
