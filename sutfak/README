@@ -1,12 +1,12 @@
 Sutfak : A Lojban quick dictionary
 
-Sutfak is a program that acts like a localized, handy version of Jbovlaste, the online
-Lojban dictionary. Features include:
+Sutfak is a Perl5/Tk program that acts a bit like a localized, handy version of
+Jbovlaste, the online Lojban dictionary at http://www.lojban.org/jbovlaste/.
 
-- Searches for English gloss words, text within definitions, and for gismu, cmavo, and rafsi
-- Allows P5 regular expression searches within definitions
-- Shows a log of all searches performed
-- De-constructs lujvo into their component rafsi
-- Searches for multiple terms at a time (separated by commas)
+Usage:
+Use the "Word" button to search for English gloss words, gismu, cmavo, and rafsi, and
+to decompose lujvo. Use the "Def" button to find gismu and cmavo whose definitions
+match a Perl 5 regular expression. You can make multiple searches at once by inserting
+commas between search terms.
 
-Note that Sutfak is not a validator: it may return output even for ungrammatical lujvo. 
+Note that Sutfak isn't a validator; it may return output even for badly formed lujvo. 

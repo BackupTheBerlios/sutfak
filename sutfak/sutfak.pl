@@ -11,9 +11,14 @@
 # - Fu'ivla
 # - Wordlist display mode
 # - Notepad area
+# - Ability to clear the log
 
 use Tk;
 use strict;
+use FindBin;
+
+### Chdir to the script's location, so we can get the dictionary files
+chdir $FindBin::Bin;
 
 ### Declarations of the hashes
 
@@ -296,7 +301,7 @@ my $word_button = $frame->Button(-text => 'Word', -command => sub {
 				}
 				
 				#Display our findings
-				$result .= "   Lujvo {" . $term . "}, expanding to {" . join(" & ", @words) . "} (" . join(" & ", @glosses) . ")";
+				$result .= "   Lujvo {" . $term . "}, expanding to {" . join(", ", @words) . "} (" . join(", ", @glosses) . ")";
 			}
 		}
 		
@@ -331,19 +336,13 @@ my $def_button = $frame->Button(-text => 'Def', -command => sub {
 		return;
 	}
 	
-	#For every search term given, seperated by &'s:
-	foreach my $term (split(/\s*\&\s*/, $in)) {
+	#For every search term given, seperated by commas:
+	foreach my $term (split(/\s*,\s*/, $in)) {
 		$output_log->insert('end', "\n");
 		
 		#The text describing any matches found
 		my $result = "";
 		
-		#Check for gloss word match
-		if (exists $gloss_words{$term}) {
-			$result .= "\n" if ($result ne "");
-			$result .= "   " . gloss_lookup($term);
-		}
-
 		#Check for gismu matches
 		foreach my $gismu (keys(%gihuste)) {
 			if ($gihuste{$gismu}[2] =~ /$term/) {
