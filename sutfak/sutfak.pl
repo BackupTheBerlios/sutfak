@@ -3,7 +3,7 @@
 # Written by David "Carbon" Simon
 # Licensed under the Artistic License
 #
-# Version 0.5
+# Version 0.6
 #
 # TODO (in order of importance):
 # - Compound cmavo
