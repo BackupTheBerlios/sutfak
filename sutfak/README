@@ -6,7 +6,8 @@ Jbovlaste, the online Lojban dictionary at http://www.lojban.org/jbovlaste/.
 Usage:
 Use the "Word" button to search for English gloss words, gismu, cmavo, and rafsi, and
 to decompose lujvo. Use the "Def" button to find gismu and cmavo whose definitions
-match a Perl 5 regular expression. You can make multiple searches at once by inserting
-commas between search terms.
+match a Perl 5 regular expression. Use the "Selma'o" button to find all the other
+cmavo in a given cmavo's selma'o, or to find all the cmavo in a given selma'o. You
+can make multiple searches at once by inserting commas between search terms.
 
-Note that Sutfak isn't a validator; it may return output even for badly formed lujvo. 
+Note that Sutfak isn't a validator; it may return output even for badly formed lujvo.

@@ -3,7 +3,7 @@
 # Written by David "Carbon" Simon
 # Licensed under the Artistic License
 #
-# Version 0.4
+# Version 0.5
 #
 # TODO (in order of importance):
 # - Compound cmavo
@@ -32,6 +32,11 @@ my %gihuste;
 #Value - [ Selma'o, Gloss word, Definition, Rafsis (comma-space seperated) ]
 my %mahoste;
 
+#Selma'oste format:
+#Key - Selma'o (not lowercased)
+#Value - [ Words ]
+my %selmahoste;
+
 #Rafste format:
 #Key - Rafsi
 #Value - Word
@@ -42,10 +47,58 @@ my %rafste;
 #Value - [ Words ]
 my %gloss_words;
 
-### Function to recursively deconstruct lujvo
+### Parsing stuff into the hashes
+
+#Parse the gismu definitions list into the gihuste and gloss_words hashes
+open GISMUS, "gismu.dat" or die("Couldn't open gismu.dat");
+for (<GISMUS>) {
+	chomp;
+	my ($word, $rafsis, $gloss, $def) = split(/\t/);
+	$rafsis =~ s/ /, /g;
+	$gihuste{$word} = [ $rafsis, $gloss, $def ];
+	push @{$gloss_words{lc($gloss)}}, $word;
+	$rafste{substr($word, 0, 4)} = $word; #The standard 4-letter mid-lujvo rafsi every gismu has
+}
+close GISMUS;
+
+#Parse the cmavo definitions list into the mahoste, selmahoste, and gloss_words hashes
+open CMAVOS, "cmavo.dat" or die("Couldn't open cmavo.dat");
+for (<CMAVOS>) {
+	chomp;
+	my ($word, $selmaho, $gloss, $def) = split(/\t/);
+	$mahoste{$word} = [ $selmaho, $gloss, $def ];
+	push @{$selmahoste{$selmaho}}, $word;
+	
+	#If this cmavo is in a numbered selma'o, insert another entry for the selma'o minus the number
+	if ($selmaho =~ /^(.+)\d+$/) {
+		push @{$selmahoste{$1}}, $word;
+	}
+	
+	push @{$gloss_words{lc($gloss)}}, $word;
+}
+close CMAVOS;
+
+#Parse the rafsi list into the rafste hash
+open RAFSIS, "rafsi.dat" or die("Couldn't open rafsi.dat");
+for (<RAFSIS>) {
+	chomp;
+	my ($rafsi, $word) = split(/ +/);
+	$rafste{lc($rafsi)} = $word;
+
+	#If it's a cmavo, then add it to the cmavo's entry
+	if (length($word) != 5) {
+		if (exists $mahoste{$word}[3]) {
+			$mahoste{$word}[3] .= ", " . $rafsi;
+		} else {
+			$mahoste{$word}[3] = $rafsi;
+		}
+	}
+}
+close RAFSIS;
+
+### Attempts to decompose a lujvo into its component words
 ### Returns an array of expanded words, or empty array if not valid lujvo
 ### Arguments: The lujvo, the current index, remaining args are the words decoded so far.
-
 sub lujvo_dec {
 	my $lujvo = shift @_;
 	my $idx = shift @_;
@@ -104,9 +157,7 @@ sub lujvo_dec {
 	return @words;
 }
 
-### Function to get information on a gismu
 ### Takes the gismu to check for, returns string of info or an empty string if no match
-
 sub gismu_lookup {
 	my $result = "";
 	my ($in) = @_;
@@ -119,9 +170,7 @@ sub gismu_lookup {
 	return $result;
 }
 
-### Function to get information on a cmavo
 ### Takes the cmavo to check for, returns string of info or an empty string if no match
-
 sub cmavo_lookup {
 	my $result = "";
 	my ($in) = @_;
@@ -135,9 +184,10 @@ sub cmavo_lookup {
 	return $result;
 }
 
-### Function to get information on a gloss word
-### Takes the gloss word to check for, returns string of info or empty string if no match
+sub selmaho_lookup {
+}
 
+### Takes the gloss word to check for, returns string of info or empty string if no match
 sub gloss_lookup {
 	my ($in) = @_;
 	my @matches;
@@ -154,9 +204,7 @@ sub gloss_lookup {
 	return "Gloss word {" . $in . "}, similar to Lojban word(s):\n" . join("\n", @matches);
 }
 
-### Function to get information on a rafsi
 ### Takes the rafsi to check for, returns string of info or empty string if no match
-
 sub rafsi_lookup {
 	my ($in) = @_;
 	if (exists $rafste{$in}) {
@@ -170,48 +218,6 @@ sub rafsi_lookup {
 
 	return "";
 }
-
-### Parsing stuff into the hashes
-
-#Parse the gismu definitions list into the gihuste and gloss_words hashes
-open GISMUS, "gismu.dat" or die("Couldn't open gismu.dat");
-for (<GISMUS>) {
-	chomp;
-	my ($word, $rafsis, $gloss, $def) = split(/\t/);
-	$rafsis =~ s/ /, /g;
-	$gihuste{$word} = [ $rafsis, $gloss, $def ];
-	push @{$gloss_words{$gloss}}, $word;
-	$rafste{substr($word, 0, 4)} = $word; #The standard 4-letter mid-lujvo rafsi every gismu has
-}
-close GISMUS;
-
-#Parse the cmavo definitions list into the mahoste and gloss_words hashes
-open CMAVOS, "cmavo.dat" or die("Couldn't open cmavo.dat");
-for (<CMAVOS>) {
-	chomp;
-	my ($word, $selmaho, $gloss, $def) = split(/\t/);
-	$mahoste{$word} = [ $selmaho, $gloss, $def ];
-	push @{$gloss_words{$gloss}}, $word;
-}
-close CMAVOS;
-
-#Parse the rafsi list into the rafste hash
-open RAFSIS, "rafsi.dat" or die("Couldn't open rafsi.dat");
-for (<RAFSIS>) {
-	chomp;
-	my ($rafsi, $word) = split(/ +/);
-	$rafste{$rafsi} = $word;
-
-	#If it's a cmavo, then add it to the cmavo's entry
-	if (length($word) != 5) {
-		if (exists $mahoste{$word}[3]) {
-			$mahoste{$word}[3] .= ", " . $rafsi;
-		} else {
-			$mahoste{$word}[3] = $rafsi;
-		}
-	}
-}
-close RAFSIS;
 
 ### Create the GUI
 
@@ -234,16 +240,28 @@ my $frame = $mw->Frame();
 my $entry = $frame->Entry();
 $entry->focus();
 
-#The Word button and associated subroutine
-my $word_button = $frame->Button(-text => 'Word', -command => sub {
-	$output_log->configure(-state => 'normal'); #Temporarily allow changes to the output log
+### Sets up the output log for insertion
+sub output_begin {
+	#Temporarily allow changes to the output log
+	$output_log->configure(-state => 'normal');
 	$output_log->insert('end', "\n"); 
 	
 	#Scroll to where the top of the output will be
 	$output_log->yview("moveto", 1);
+}
+
+### Locks the output log
+sub output_end {
+	#Prevent the user from editing the output log
+	$output_log->configure(-state => 'disabled');
+}
+
+#The Word button and associated subroutine
+my $word_button = $frame->Button(-text => 'Word', -command => sub {
+	output_begin();
 	
 	#Clean up the input string
-	my $in = $entry->get();
+	my $in = lc($entry->get());
 	$in =~ /^\s*(.+)\s*$/ or $in = "";
 	if ($in ne "") { 
 		$in = $1;
@@ -313,17 +331,13 @@ my $word_button = $frame->Button(-text => 'Word', -command => sub {
 			$output_log->insert('end', $result);
 		}
 	}
-	
-	$output_log->configure(-state => 'disabled'); #Prevent the user from editing the output log
+
+	output_end();
 });
 
 #The Def button and associated subroutine
 my $def_button = $frame->Button(-text => 'Def', -command => sub {
-	$output_log->configure(-state => 'normal'); #Temporarily allow changes to the output log
-	$output_log->insert('end', "\n"); 
-	
-	#Scroll to where the top of the output will be
-	$output_log->yview("moveto", 1);
+	output_begin();
 	
 	#Clean up the input string
 	my $in = $entry->get();
@@ -368,7 +382,54 @@ my $def_button = $frame->Button(-text => 'Def', -command => sub {
 		}
 	}
 	
-	$output_log->configure(-state => 'disabled'); #Prevent the user from editing the output log
+	output_end();
+});
+
+#The Selma'o button and associated subroutine
+my $selmaho_button = $frame->Button(-text => "Selma'o", -command => sub {
+	output_begin();
+	
+	#Clean up the input string, and uppercase it since selma'o are uppercase (nobody knows why)
+	my $in = uc($entry->get());
+	$in =~ /^\s*(.+)\s*$/ or $in = "";
+	if ($in ne "") { 
+		$in = $1;
+	} else {
+		$output_log->insert('end', "\n   No input given.");
+		$output_log->yview("moveto", 1); #Scroll down to the bottom
+		return;
+	}
+	
+	#Lowercase all H's, since this is the selma'o format (nobody knows why)
+	$in =~ s/H/h/g;
+	
+	#For every search term given, seperated by commas:
+	foreach my $term (split(/\s*,\s*/, $in)) {
+		my $selmaho = ""; #If we find a selma'o, we'll set this to something else
+		
+		#See if it's already an actual selma'o
+		if (exists $selmahoste{$term}) {
+			$selmaho = $term;
+		} else {
+			#If it wasn't a selma'o, maybe it's a cmavo
+			my $cmavo = lc($term);
+			$cmavo =~ s/h/\'/g;
+			$selmaho = $mahoste{$cmavo}[0] if (exists $mahoste{$cmavo});
+		}
+		
+		#If we found a selma'o, print out its members
+		if ($selmaho ne "") {
+			$entry->delete('0', 'end');
+			$output_log->insert('end', "\nSelma'o {" . $selmaho . "} with member cmavo:");
+			foreach my $member (@{$selmahoste{$selmaho}}) {
+				$output_log->insert('end', "\n   " . $member . " - " . $mahoste{$member}[2]);
+			}
+		} else {
+			$output_log->insert('end', "\n   No such cmavo or selma'o {" . $term . "}");
+		}
+	}
+
+	output_end();
 });
 
 #Pedal to the metal
@@ -376,6 +437,7 @@ $entry->pack(-side => 'left', -fill => 'x', -expand => 'y');
 $entry->bind('<KeyPress-Return>', sub { $word_button->invoke() });
 $word_button->pack(-side => 'left');
 $def_button->pack(-side => 'left');
+$selmaho_button->pack(-side => 'left');
 $frame->pack(-side => 'top', -fill => 'x');
 $output_log->pack(-fill => 'both', -expand => 'y');
 MainLoop;
